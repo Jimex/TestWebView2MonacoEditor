@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
+    <link rel="stylesheet" data-name="vs/editor/editor.main" href="./min/vs/editor/editor.main.css" />
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        #container {
+            height: 100%;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="container"></div>
+
+    <script src="./min/vs/loader.js"></script>
+    <script>
+        require.config({ paths: { 'vs': './min/vs' } });
+    </script>
+    <script>
+      
+        function addEditorContextMenu(id, actionLabel, actionScripts) {
+            // Press Ctrl-F10 => the action will run if it is enabled
+            // Press Chord Ctrl-K, Ctrl-M => the action will run if it is enabled
+            console.log('Add contenxt menu for ' + actionLabel);
+            editor.addAction({
+                // An unique identifier of the contributed action.
+                id: id,
+                // A label of the action that will be presented to the user.
+                label: actionLabel,
+                // A precondition for this action.
+                precondition: null,
+                // A rule to evaluate on top of the precondition in order to dispatch the keybindings.
+                keybindingContext: null,
+                contextMenuGroupId: "navigation",
+                contextMenuOrder: 1.5,
+                // Method that will be executed when the action is triggered.
+                // @param editor The editor instance is passed in as a convenience
+                run: function (editor) {
+                    console.log(`Run action ${actionScripts}`);
+                    eval(actionScripts);
+                },
+            });
+            console.log('Added contenxt menu for ' + actionLabel);
+        }
+     
+        try {
+            const params = new Proxy(new URLSearchParams(window.location.search), {
+                get: (searchParams, prop) => searchParams.get(prop),
+            });
+            let theme = 'vs-light';
+            if (params.theme)
+                theme = params.theme;
+
+            let fontSize = '12px';
+            if (params.fontSize)
+                fontSize = params.fontSize;
+            const defaultLanguage = 'en-us';
+            if (params.locale && params.locale != defaultLanguage) {
+                console.log("Locale:" + params.locale);
+                require.config({
+                    'vs/nls': {
+                        availableLanguages: {
+                            '*': params.locale
+                        }
+                    }
+                });
+            }
+            require(['vs/editor/editor.main'], function () {
+                editor = monaco.editor.create(document.getElementById('container'), {
+                    value: '',
+                    language: 'json',
+                    fontSize: fontSize,
+                    theme: theme,
+                    minimap: {
+                        enabled: true
+                    }
+                });
+                addEditorContextMenu(`menu-id-show-test`, 'TEST CLICK', 'alert(1);');
+				editor.setValue(`{\"Order No\":\"TEST-DO-0001\",\n\"Customer\":\"TEST-CUST\",\n\"Item\":\"TEST-Item\"}`);
+            });
+
+
+			
+
+            window.onresize = function () {
+                if (editor) {
+                    editor.layout();
+                }
+            };
+
+
+        }
+        catch (e) {
+            console.log(e);
+            alert(e.message);
+        }        
+    </script>
+
+</body>
+
+</html>
